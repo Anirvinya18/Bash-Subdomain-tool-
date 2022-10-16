@@ -1,0 +1,47 @@
+import argparse
+import sys
+# prevent creation of compiled bytecode files
+sys.dont_write_bytecode = True
+from recon.core import base
+from recon.core.framework import Colors
+
+def output(string):
+    print(f"{Colors.B}[*]{Colors.N} {string}")
+
+def recon_cli(args):
+    # process toggle flag arguments
+    flags = {
+        'check': args.check if not args.stealth else False,
+        'analytics': args.analytics if not args.stealth else False,
+        'marketplace': args.marketplace if not args.stealth else False,
+    }
+    # instantiate framework
+    x = base.Recon(**flags)
+    options = [base.Mode.CLI]
+    if args.workspace:
+        options.append(args.workspace)
+    x.start(*options)
+    # set given workspace
+    if args.workspace:
+        x._init_workspace(args.workspace)
+        print(f"WORKSPACE => {args.workspace}")
+    # run given global commands
+    for command in args.global_commands:
+        print(f"GLOBAL COMMAND => {command}")
+        x.onecmd(command)
+    # set given global options
+    for option in args.goptions:
+        param = ' '.join(option.split('='))
+        x._do_options_set(param)
+    # if requested, show global options and exit
+    if args.gshow:
+        x._do_options_list('')
+        return
+    # if requested, show modules and exit
+    if args.show_modules:
+        x._do_modules_search('')
+        return
+    # exit if module not specified
+    if not args.module:
+        output('No module provided.')
+        return
